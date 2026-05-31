@@ -1,0 +1,65 @@
+# 智检通 - 工程质量检测分析智能体系统配置
+
+# 模型配置
+model:
+  base_model: "Qwen/Qwen2.5-7B-Instruct"
+  finetuned_model_path: "./model/finetuned"
+  device: "auto"
+  torch_dtype: "bfloat16"
+  load_in_4bit: true
+
+# LoRA微调配置
+lora:
+  r: 64
+  lora_alpha: 128
+  lora_dropout: 0.05
+  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+  task_type: "CAUSAL_LM"
+
+# 训练配置
+training:
+  output_dir: "./model/finetuned"
+  num_train_epochs: 3
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 4
+  learning_rate: 2e-4
+  warmup_ratio: 0.1
+  logging_steps: 10
+  save_strategy: "epoch"
+  eval_strategy: "epoch"
+  fp16: false
+  bf16: true
+  max_length: 2048
+
+# RAG配置
+rag:
+  embedding_model: "shibing624/text2vec-large-chinese"
+  chunk_size: 500
+  chunk_overlap: 50
+  collection_name: "quality_standards"
+  top_k: 5
+  score_threshold: 0.5
+
+# Milvus配置
+milvus:
+  host: "localhost"
+  port: 19530
+  use_lite: true  # 使用Milvus Lite，无需独立服务
+
+# Agent配置
+agent:
+  max_iterations: 10
+  temperature: 0.1
+  verbose: true
+
+# 前端配置
+app:
+  title: "智检通 - 工程质量检测分析智能体系统"
+  page_icon: "🏗️"
+  layout: "wide"
+  port: 8501
+
+# 日志配置
+logging:
+  level: "INFO"
+  file: "./logs/app.log"

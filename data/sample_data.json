@@ -1,0 +1,55 @@
+{
+  "concrete_strength": [
+    {"date": "2024-01-15", "value": 32.5, "unit": "MPa", "design_grade": "C30", "location": "1#楼基础"},
+    {"date": "2024-01-22", "value": 31.8, "unit": "MPa", "design_grade": "C30", "location": "1#楼1层柱"},
+    {"date": "2024-02-05", "value": 33.2, "unit": "MPa", "design_grade": "C30", "location": "1#楼2层柱"},
+    {"date": "2024-02-19", "value": 30.5, "unit": "MPa", "design_grade": "C30", "location": "1#楼3层柱"},
+    {"date": "2024-03-04", "value": 34.1, "unit": "MPa", "design_grade": "C30", "location": "1#楼4层柱"},
+    {"date": "2024-03-18", "value": 32.0, "unit": "MPa", "design_grade": "C30", "location": "2#楼基础"},
+    {"date": "2024-04-01", "value": 35.5, "unit": "MPa", "design_grade": "C30", "location": "2#楼1层柱"},
+    {"date": "2024-04-15", "value": 33.8, "unit": "MPa", "design_grade": "C30", "location": "2#楼2层柱"},
+    {"date": "2024-05-06", "value": 31.2, "unit": "MPa", "design_grade": "C30", "location": "2#楼3层柱"},
+    {"date": "2024-05-20", "value": 36.0, "unit": "MPa", "design_grade": "C30", "location": "2#楼4层柱"}
+  ],
+  "steel_strength": [
+    {"date": "2024-01-10", "yield_strength": 425, "tensile_strength": 585, "grade": "HRB400", "batch": "B001"},
+    {"date": "2024-01-25", "yield_strength": 418, "tensile_strength": 578, "grade": "HRB400", "batch": "B002"},
+    {"date": "2024-02-08", "yield_strength": 432, "tensile_strength": 592, "grade": "HRB400", "batch": "B003"},
+    {"date": "2024-02-22", "yield_strength": 415, "tensile_strength": 570, "grade": "HRB400", "batch": "B004"},
+    {"date": "2024-03-07", "yield_strength": 428, "tensile_strength": 588, "grade": "HRB400", "batch": "B005"}
+  ],
+  "slump_test": [
+    {"date": "2024-01-16", "value": 160, "unit": "mm", "concrete_grade": "C30"},
+    {"date": "2024-01-23", "value": 155, "unit": "mm", "concrete_grade": "C30"},
+    {"date": "2024-02-06", "value": 170, "unit": "mm", "concrete_grade": "C30"},
+    {"date": "2024-02-20", "value": 145, "unit": "mm", "concrete_grade": "C30"},
+    {"date": "2024-03-05", "value": 165, "unit": "mm", "concrete_grade": "C30"},
+    {"date": "2024-03-19", "value": 158, "unit": "mm", "concrete_grade": "C30"}
+  ],
+  "rebound_test": [
+    {"date": "2024-03-10", "rebound_value": 38, "carbonation_depth": 2.0, "estimated_strength": 32.5, "location": "1#楼1层柱"},
+    {"date": "2024-03-10", "rebound_value": 36, "carbonation_depth": 2.5, "estimated_strength": 30.2, "location": "1#楼2层柱"},
+    {"date": "2024-03-15", "rebound_value": 40, "carbonation_depth": 1.5, "estimated_strength": 35.8, "location": "2#楼1层柱"},
+    {"date": "2024-03-15", "rebound_value": 37, "carbonation_depth": 3.0, "estimated_strength": 28.5, "location": "2#楼2层柱"}
+  ],
+  "standard_limits": {
+    "concrete_strength": {
+      "C20": {"min": 20.0},
+      "C25": {"min": 25.0},
+      "C30": {"min": 30.0},
+      "C35": {"min": 35.0},
+      "C40": {"min": 40.0},
+      "C45": {"min": 45.0},
+      "C50": {"min": 50.0}
+    },
+    "steel_HRB400": {
+      "yield_strength": {"min": 400, "max": 540},
+      "tensile_strength": {"min": 540},
+      "yield_ratio": {"min": 1.25}
+    },
+    "slump": {
+      "normal": {"min": 70, "max": 180},
+      "pumping": {"min": 120, "max": 220}
+    }
+  }
+}

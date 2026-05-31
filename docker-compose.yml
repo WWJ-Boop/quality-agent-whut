@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./model:/app/model
+      - ./config:/app/config
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  milvus:
+    image: milvusdb/milvus:v2.4-latest
+    ports:
+      - "19530:19530"
+    volumes:
+      - milvus_data:/var/lib/milvus
+    environment:
+      - ETCD_USE_EMBED=true
+      - COMMON_STORAGETYPE=local
+
+volumes:
+  milvus_data:
