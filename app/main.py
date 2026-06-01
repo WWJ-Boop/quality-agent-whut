@@ -159,12 +159,8 @@ def main():
 
         # 系统状态
         st.markdown("### 系统状态")
-        st.success("✅ 系统就绪")
-
-        if st.session_state.get("vector_store"):
-            st.success("✅ 知识库已连接")
-        else:
-            st.warning("⚠️ 知识库未初始化")
+        st.success("✅ 系统就绪（演示模式）")
+        st.info("💡 使用规则引擎，支持常见检测问题")
 
         st.markdown("---")
         st.markdown("""
