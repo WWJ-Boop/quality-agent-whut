@@ -64,31 +64,38 @@ def render():
             st.metric("趋势", result["trend"])
 
         # 图表
-        st.markdown("### 趋势图")
         unit_map = {
             "混凝土抗压强度": "MPa",
             "钢筋屈服强度": "MPa",
             "坍落度": "mm",
             "回弹值": "",
         }
-        chart_base64 = generate_trend_chart(
-            data,
-            title=f"{indicator_type}趋势图",
-            indicator_name=indicator_type,
-            unit=unit_map.get(indicator_type, ""),
-        )
-        st.image(BytesIO(base64.b64decode(chart_base64)), use_container_width=True)
+
+        st.markdown("### 趋势图")
+        try:
+            chart_base64 = generate_trend_chart(
+                data,
+                title=f"{indicator_type}趋势图",
+                indicator_name=indicator_type,
+                unit=unit_map.get(indicator_type, ""),
+            )
+            st.image(BytesIO(base64.b64decode(chart_base64)), use_container_width=True)
+        except Exception as e:
+            st.error(f"趋势图生成失败: {e}")
 
         # 分布图
         st.markdown("### 分布图")
-        values = [d["value"] for d in data]
-        dist_base64 = generate_distribution_chart(
-            values,
-            title=f"{indicator_type}分布图",
-            indicator_name=indicator_type,
-            unit=unit_map.get(indicator_type, ""),
-        )
-        st.image(BytesIO(base64.b64decode(dist_base64)), use_container_width=True)
+        try:
+            values = [d["value"] for d in data]
+            dist_base64 = generate_distribution_chart(
+                values,
+                title=f"{indicator_type}分布图",
+                indicator_name=indicator_type,
+                unit=unit_map.get(indicator_type, ""),
+            )
+            st.image(BytesIO(base64.b64decode(dist_base64)), use_container_width=True)
+        except Exception as e:
+            st.error(f"分布图生成失败: {e}")
 
         # 预警信息
         if result.get("warning"):
@@ -104,42 +111,48 @@ def manual_input():
     """手动输入数据"""
     st.markdown("### 输入检测数据")
 
-    num_samples = st.number_input("样本数量", min_value=3, max_value=100, value=10)
+    num_samples = st.number_input("样本数量", min_value=3, max_value=20, value=6)
 
-    data = []
-    cols = st.columns(2)
+    # 使用表单避免频繁刷新
+    with st.form("data_input_form"):
+        data = []
+        cols = st.columns(2)
 
-    with cols[0]:
-        for i in range(num_samples // 2):
-            date = st.date_input(
-                f"日期 {i+1}",
-                value=datetime.now() - timedelta(days=num_samples - i),
-                key=f"date_{i}",
-            )
-            value = st.number_input(
-                f"检测值 {i+1}",
-                min_value=0.0,
-                value=30.0 + np.random.normal(0, 2),
-                key=f"value_{i}",
-            )
-            data.append({"date": date.strftime("%Y-%m-%d"), "value": value})
+        with cols[0]:
+            for i in range(num_samples // 2):
+                date = st.date_input(
+                    f"日期 {i+1}",
+                    value=datetime.now() - timedelta(days=num_samples - i),
+                    key=f"date_{i}",
+                )
+                value = st.number_input(
+                    f"检测值 {i+1}",
+                    min_value=0.0,
+                    value=30.0,
+                    key=f"value_{i}",
+                )
+                data.append({"date": date.strftime("%Y-%m-%d"), "value": value})
 
-    with cols[1]:
-        for i in range(num_samples // 2, num_samples):
-            date = st.date_input(
-                f"日期 {i+1}",
-                value=datetime.now() - timedelta(days=num_samples - i),
-                key=f"date_{i}",
-            )
-            value = st.number_input(
-                f"检测值 {i+1}",
-                min_value=0.0,
-                value=30.0 + np.random.normal(0, 2),
-                key=f"value_{i}",
-            )
-            data.append({"date": date.strftime("%Y-%m-%d"), "value": value})
+        with cols[1]:
+            for i in range(num_samples // 2, num_samples):
+                date = st.date_input(
+                    f"日期 {i+1}",
+                    value=datetime.now() - timedelta(days=num_samples - i),
+                    key=f"date_{i}",
+                )
+                value = st.number_input(
+                    f"检测值 {i+1}",
+                    min_value=0.0,
+                    value=30.0,
+                    key=f"value_{i}",
+                )
+                data.append({"date": date.strftime("%Y-%m-%d"), "value": value})
 
-    return data
+        submitted = st.form_submit_button("开始分析")
+        if submitted:
+            return data
+
+    return []
 
 
 def upload_csv():
