@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # 设置中文字体
-plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'WenQuanYi Zen Hei', 'DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
 
 

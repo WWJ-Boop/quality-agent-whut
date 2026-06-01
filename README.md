@@ -67,6 +67,51 @@ streamlit run app/main.py
 
 访问 http://localhost:8501 即可使用。
 
+## Streamlit Cloud 部署
+
+本项目支持部署到 [Streamlit Cloud](https://streamlit.io/cloud) 进行在线演示。
+
+### 部署步骤
+
+1. **Fork 或 Push 项目到 GitHub**
+   ```bash
+   git remote add origin https://github.com/<your-username>/quality-inspection-agent.git
+   git push -u origin master
+   ```
+
+2. **登录 Streamlit Cloud**
+   访问 https://share.streamlit.io 并使用 GitHub 账号登录
+
+3. **部署应用**
+   - Repository: 选择你的仓库
+   - Branch: `master`
+   - Main file path: `app/main.py`
+   - 点击 "Deploy!"
+
+### 云端运行说明
+
+Streamlit Cloud 版本为**演示模式**，与本地部署的区别：
+
+| 功能 | 本地部署 | Streamlit Cloud |
+|------|---------|----------------|
+| 报告分析 (PDF解析) | 完整功能 | 完整功能 |
+| 趋势分析 (图表) | 完整功能 | 完整功能 |
+| 报告生成 | 完整功能 | 完整功能 |
+| 标准问答 (RAG) | 需要 Milvus + Embedding 模型 | 基于规则的演示回复 |
+| LLM 推理 | 本地模型 / API | 无需 API 的演示回复 |
+
+- 无 GPU 和模型权重时，系统自动切换到**演示模式**，使用内置规则引擎生成回复
+- 如需完整 LLM 能力，可在 Streamlit Cloud 的 Secrets 中配置 `OPENAI_API_KEY`
+
+### 环境变量配置（可选）
+
+在 Streamlit Cloud 的 "Secrets" 中添加：
+
+```toml
+OPENAI_API_KEY = "your-api-key"
+OPENAI_BASE_URL = "https://api.openai.com/v1"
+```
+
 ## 项目结构
 
 ```

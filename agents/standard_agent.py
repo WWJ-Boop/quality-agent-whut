@@ -7,7 +7,6 @@ from typing import Optional, Callable, List
 from loguru import logger
 
 from agents.base_agent import BaseAgent
-from knowledge import VectorStore, SearchResult
 
 
 class StandardQAAgent(BaseAgent):
@@ -20,7 +19,7 @@ class StandardQAAgent(BaseAgent):
     4. 标注引用来源
     """
 
-    def __init__(self, llm_caller: Optional[Callable] = None, vector_store: Optional[VectorStore] = None):
+    def __init__(self, llm_caller: Optional[Callable] = None, vector_store=None):
         super().__init__(llm_caller)
         self.vector_store = vector_store
 

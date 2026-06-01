@@ -46,3 +46,6 @@ Thumbs.db
 # 大型数据文件
 data/standards/*.pdf
 data/reports/*.pdf
+
+# Streamlit Cloud
+.streamlit/secrets.toml

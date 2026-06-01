@@ -1,3 +1,4 @@
+# Streamlit Cloud 部署依赖（轻量版）
 streamlit>=1.35.0
 pandas>=2.2.0
 numpy>=1.26.0
