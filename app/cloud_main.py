@@ -831,53 +831,55 @@ def render_home():
     # Architecture Section
     st.markdown('<p class="eyebrow" style="margin-bottom: 1.5rem;">系统架构</p>', unsafe_allow_html=True)
 
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        st.markdown("""
-        <div class="arch-layer">
-            <div class="arch-layer-icon">📱</div>
-            <div class="arch-layer-content">
-                <h4>前端展示层</h4>
-                <p>Streamlit Web应用 · 报告分析 · 标准问答 · 趋势分析 · 报告生成</p>
-            </div>
-        </div>
-        <div class="arch-layer">
-            <div class="arch-layer-icon">🤖</div>
-            <div class="arch-layer-content">
-                <h4>Agent编排层</h4>
-                <p>协调Agent → 报告分析Agent · 标准问答Agent · 趋势分析Agent</p>
-            </div>
-        </div>
-        <div class="arch-layer">
-            <div class="arch-layer-icon">🧠</div>
-            <div class="arch-layer-content">
-                <h4>模型服务层</h4>
-                <p>Qwen2.5-7B + QLoRA微调 · RAG知识库 (Milvus向量数据库)</p>
-            </div>
-        </div>
-        <div class="arch-layer">
-            <div class="arch-layer-icon">📚</div>
-            <div class="arch-layer-content">
-                <h4>知识资源层</h4>
-                <p>30+国家/行业标准 · GB/T 50081 · GB 50204 · GB/T 1499.2</p>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+    # 系统架构图片（请将图片放在项目根目录的 assets 文件夹中，或使用在线图片URL）
+    # 方式1：使用本地图片（需要将图片上传到项目中）
+    # st.image("assets/architecture.png", use_container_width=True)
 
-    with col2:
-        st.markdown("""
-        <div class="surface-card" style="height: 100%;">
-            <p class="eyebrow" style="margin-bottom: 1rem;">技术栈</p>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                <span class="tech-tag">Qwen2.5-7B</span>
-                <span class="tech-tag">QLoRA微调</span>
-                <span class="tech-tag">多Agent协同</span>
-                <span class="tech-tag">Milvus向量库</span>
-                <span class="tech-tag">Streamlit</span>
-                <span class="tech-tag">RAG检索增强</span>
-            </div>
+    # 方式2：使用在线图片URL（替换为你的架构图URL）
+    # st.image("https://your-architecture-image-url.png", use_container_width=True)
+
+    # 方式3：使用带链接的占位图（点击可跳转到架构图）
+    st.markdown("""
+    <div class="surface-card" style="text-align: center; padding: 3rem;">
+        <div style="margin-bottom: 1.5rem;">
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="120" height="120" rx="16" fill="#141516"/>
+                <path d="M60 25L85 45V75L60 95L35 75V45L60 25Z" stroke="#5e6ad2" stroke-width="2" fill="none"/>
+                <circle cx="60" cy="60" r="15" fill="#5e6ad2" opacity="0.3"/>
+                <circle cx="60" cy="60" r="8" fill="#5e6ad2"/>
+                <line x1="60" y1="25" x2="60" y2="45" stroke="#5e6ad2" stroke-width="1.5"/>
+                <line x1="60" y1="75" x2="60" y2="95" stroke="#5e6ad2" stroke-width="1.5"/>
+                <line x1="35" y1="45" x2="60" y2="60" stroke="#5e6ad2" stroke-width="1.5"/>
+                <line x1="85" y1="45" x2="60" y2="60" stroke="#5e6ad2" stroke-width="1.5"/>
+            </svg>
         </div>
-        """, unsafe_allow_html=True)
+        <p class="body" style="margin-bottom: 1rem;">系统架构图</p>
+        <p class="body-sm">请将架构图添加到项目中，或使用在线图片链接</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="margin-top: 1rem;">
+        <p class="body-sm" style="color: #8a8f98;">
+            <strong>提示：</strong>将架构图文件（PNG/SVG）放入项目的 <code>assets</code> 文件夹，
+            然后取消注释上方的 <code>st.image()</code> 代码行即可显示。
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 技术栈
+    st.markdown('<p class="eyebrow" style="margin-bottom: 1rem;">技术栈</p>', unsafe_allow_html=True)
+    techs = ["Qwen2.5-7B", "QLoRA微调", "多Agent协同", "Milvus向量库", "Streamlit", "RAG检索增强"]
+    cols = st.columns(6)
+    for i, tech in enumerate(techs):
+        with cols[i]:
+            st.markdown(f"""
+            <div style="background: #141516; border: 1px solid #23252a; border-radius: 8px; padding: 12px; text-align: center;">
+                <span class="tech-tag" style="margin: 0;">{tech}</span>
+            </div>
+            """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -886,7 +888,8 @@ def render_home():
     <div class="surface-card" style="text-align: center;">
         <p class="body-sm" style="margin: 0;">
             <strong>说明：</strong>当前为演示版本，使用基于规则的智能回复。完整版本支持本地大模型推理和RAG知识库检索。<br>
-            <strong>参赛信息：</strong>第二届武汉理工大学中国研究生智能建造创新大赛 · 工程大模型 Agent 智能应用系统设计赛道
+            <strong>参赛信息：</strong>第二届武汉理工大学中国研究生智能建造创新大赛 · 工程大模型 Agent 智能应用系统设计赛道<br>
+            <strong>参赛人员：</strong>吴武俊
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -1308,7 +1311,7 @@ def main():
         <div style="margin-top: 1rem; background: #141516; padding: 12px; border-radius: 8px; border: 1px solid #23252a;">
             <p style="color: #8a8f98; margin: 0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.4px;">参赛信息</p>
             <p style="color: #d0d6e0; margin: 4px 0 0 0; font-size: 0.8125rem;">
-                工程大模型 Agent<br>智能应用系统设计赛道<br>武汉理工大学
+                工程大模型 Agent<br>智能应用系统设计赛道<br>武汉理工大学<br>参赛人员：吴武俊
             </p>
         </div>
         """, unsafe_allow_html=True)
