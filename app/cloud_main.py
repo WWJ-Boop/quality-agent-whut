@@ -835,19 +835,20 @@ def render_home():
 
     # 系统架构图片 - 使用 base64 编码确保显示
     import base64
-    from pathlib import Path
+    import os
 
     # 尝试多个可能的路径
     possible_paths = [
-        Path(__file__).parent.parent / "assets" / "architecture.png",
-        Path("assets/architecture.png"),
-        Path("../assets/architecture.png"),
+        "assets/architecture.png",
+        "../assets/architecture.png",
+        os.path.join(os.path.dirname(__file__), "..", "assets", "architecture.png"),
+        os.path.join(os.getcwd(), "assets", "architecture.png"),
     ]
 
     image_loaded = False
     for img_path in possible_paths:
         try:
-            if img_path.exists():
+            if os.path.exists(img_path):
                 with open(img_path, "rb") as f:
                     img_data = base64.b64encode(f.read()).decode()
                 st.markdown(f'''
