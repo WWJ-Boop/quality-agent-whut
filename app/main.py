@@ -738,16 +738,10 @@ def call_ai_api(question):
         return None
 
     # 构建请求
-    if "MiMo" in api_provider:
-        headers = {
-            "api-key": api_key,
-            "Content-Type": "application/json"
-        }
-    else:
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
 
     # 工程检测系统提示词
     system_prompt = """你是「智检通」工程质量检测智能助手，专门解答工程检测相关问题。
@@ -765,7 +759,7 @@ def call_ai_api(question):
 请用专业、准确、简洁的方式回答问题。如果涉及具体数值，请引用相关标准条文。"""
 
     data = {
-        "model": "doubao-1.5-pro-32k" if "豆包" in api_provider else "qwen-turbo" if "通义" in api_provider else "deepseek-chat" if "DeepSeek" in api_provider else "mimo-v2-pro" if "MiMo" in api_provider else "gpt-3.5-turbo",
+        "model": "doubao-1.5-pro-32k" if "豆包" in api_provider else "qwen-turbo" if "通义" in api_provider else "deepseek-chat" if "DeepSeek" in api_provider else "XiaomiMiMo/MiMo-7B-RL" if "MiMo" in api_provider else "gpt-3.5-turbo",
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": question}
@@ -1413,8 +1407,8 @@ def main():
                 api_base = "https://api.deepseek.com"
                 st.caption("获取API Key: [DeepSeek](https://platform.deepseek.com)")
             elif api_provider == "MiMo（小米）":
-                api_base = "https://api.xiaomimimo.com/v1"
-                st.caption("获取API Key: [MiMo](https://xiaomimimo.com)")
+                api_base = "https://api.siliconflow.cn/v1"
+                st.caption("获取API Key: [SiliconFlow](https://siliconflow.cn)")
             elif api_provider == "OpenAI":
                 api_base = st.text_input("API Base URL", value="https://api.openai.com/v1")
                 st.caption("获取API Key: [OpenAI](https://platform.openai.com)")
