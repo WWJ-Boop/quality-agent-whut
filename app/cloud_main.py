@@ -865,7 +865,7 @@ def render_home():
             continue
 
     if not image_loaded:
-        # 如果所有路径都失败，显示占位符
+        # 如果所有路径都失败，显示占位符和调试信息
         st.markdown("""
         <div class="surface-card" style="text-align: center; padding: 3rem;">
             <div style="margin-bottom: 1.5rem;">
@@ -880,6 +880,12 @@ def render_home():
             <p class="body-sm" style="color: #8a8f98;">请将 architecture.png 放入 assets 文件夹</p>
         </div>
         """, unsafe_allow_html=True)
+
+        # 显示调试信息（仅在开发模式下）
+        if st.checkbox("显示调试信息", key="debug_arch"):
+            st.write("尝试的路径:", possible_paths)
+            st.write("当前工作目录:", os.getcwd())
+            st.write("脚本目录:", os.path.dirname(__file__))
 
     st.markdown("<br>", unsafe_allow_html=True)
 
