@@ -1404,7 +1404,7 @@ def main():
                 api_base = "https://dashscope.aliyuncs.com/compatible-mode/v1"
                 st.caption("获取API Key: [通义千问](https://dashscope.console.aliyun.com)")
             elif api_provider == "DeepSeek":
-                api_base = "https://api.deepseek.com/v1"
+                api_base = "https://api.deepseek.com"
                 st.caption("获取API Key: [DeepSeek](https://platform.deepseek.com)")
             elif api_provider == "MiMo（小米）":
                 api_base = "https://api.xiaomimimo.com/v1"
