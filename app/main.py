@@ -759,7 +759,7 @@ def call_ai_api(question):
 请用专业、准确、简洁的方式回答问题。如果涉及具体数值，请引用相关标准条文。"""
 
     data = {
-        "model": "doubao-1.5-pro-32k" if "豆包" in api_provider else "qwen-turbo" if "通义" in api_provider else "deepseek-chat" if "DeepSeek" in api_provider else "gpt-3.5-turbo",
+        "model": "doubao-1.5-pro-32k" if "豆包" in api_provider else "qwen-turbo" if "通义" in api_provider else "deepseek-chat" if "DeepSeek" in api_provider else "mimo-v2-pro" if "MiMo" in api_provider else "gpt-3.5-turbo",
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": question}
@@ -1387,7 +1387,7 @@ def main():
 
         api_provider = st.selectbox(
             "选择AI模型",
-            ["演示模式（无需API）", "豆包（字节跳动）", "通义千问（阿里）", "DeepSeek", "OpenAI"],
+            ["演示模式（无需API）", "豆包（字节跳动）", "通义千问（阿里）", "DeepSeek", "MiMo（小米）", "OpenAI"],
             index=0
         )
 
@@ -1406,6 +1406,9 @@ def main():
             elif api_provider == "DeepSeek":
                 api_base = "https://api.deepseek.com/v1"
                 st.caption("获取API Key: [DeepSeek](https://platform.deepseek.com)")
+            elif api_provider == "MiMo（小米）":
+                api_base = "https://api.mimo.ai/v1"
+                st.caption("获取API Key: [MiMo](https://mimo.ai)")
             elif api_provider == "OpenAI":
                 api_base = st.text_input("API Base URL", value="https://api.openai.com/v1")
                 st.caption("获取API Key: [OpenAI](https://platform.openai.com)")
