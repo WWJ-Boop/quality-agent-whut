@@ -726,6 +726,64 @@ def generate_distribution_chart(values, title="检测值分布图", indicator_na
     return img_base64
 
 
+def call_ai_api(question):
+    """调用AI API回答问题"""
+    import requests
+
+    api_provider = st.session_state.get("api_provider", "演示模式")
+    api_key = st.session_state.get("api_key", "")
+    api_base = st.session_state.get("api_base", "")
+
+    if api_provider == "演示模式" or not api_key:
+        return None
+
+    # 构建请求
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+
+    # 工程检测系统提示词
+    system_prompt = """你是「智检通」工程质量检测智能助手，专门解答工程检测相关问题。
+
+你的知识范围包括：
+1. 混凝土强度检测与评定（GB/T 50107、GB 50204、GB/T 50081）
+2. 钢筋力学性能检测（GB/T 1499.2、GB/T 228.1）
+3. 回弹法检测（JGJ/T 23）
+4. 桩基检测（JGJ 106）
+5. 坍落度检测（GB/T 50080）
+6. 工程质量合格判定
+7. 取样频率与批次规定
+8. 承载力计算与判定
+
+请用专业、准确、简洁的方式回答问题。如果涉及具体数值，请引用相关标准条文。"""
+
+    data = {
+        "model": "doubao-1.5-pro-32k" if "豆包" in api_provider else "qwen-turbo" if "通义" in api_provider else "deepseek-chat" if "DeepSeek" in api_provider else "gpt-3.5-turbo",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": question}
+        ],
+        "temperature": 0.7,
+        "max_tokens": 1000
+    }
+
+    try:
+        response = requests.post(
+            f"{api_base}/chat/completions",
+            headers=headers,
+            json=data,
+            timeout=30
+        )
+        if response.status_code == 200:
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
+        else:
+            return f"API调用失败: {response.status_code} - {response.text}"
+    except Exception as e:
+        return f"API调用错误: {str(e)}"
+
+
 def demo_answer(question):
     """演示模式问答 - 扩展版"""
     q = question.lower()
@@ -1058,33 +1116,33 @@ def render_standard_qa():
         if st.button("混凝土强度评定标准是什么？", use_container_width=True):
             q = "混凝土强度评定标准是什么？依据哪个规范？"
             st.session_state.qa_messages.append({"role": "user", "content": q})
-            answer = demo_answer(q)
+            answer = call_ai_api(q) or demo_answer(q)
             st.session_state.qa_messages.append({"role": "assistant", "content": answer})
             st.rerun()
         if st.button("钢筋取样频率规定？", use_container_width=True):
             q = "钢筋力学性能检测的取样频率和数量是如何规定的？"
             st.session_state.qa_messages.append({"role": "user", "content": q})
-            answer = demo_answer(q)
+            answer = call_ai_api(q) or demo_answer(q)
             st.session_state.qa_messages.append({"role": "assistant", "content": answer})
             st.rerun()
     with col2:
         if st.button("回弹法检测注意事项？", use_container_width=True):
             q = "回弹法检测混凝土强度时需要注意哪些事项？"
             st.session_state.qa_messages.append({"role": "user", "content": q})
-            answer = demo_answer(q)
+            answer = call_ai_api(q) or demo_answer(q)
             st.session_state.qa_messages.append({"role": "assistant", "content": answer})
             st.rerun()
         if st.button("坍落度检测方法？", use_container_width=True):
             q = "混凝土坍落度的检测方法和步骤是什么？"
             st.session_state.qa_messages.append({"role": "user", "content": q})
-            answer = demo_answer(q)
+            answer = call_ai_api(q) or demo_answer(q)
             st.session_state.qa_messages.append({"role": "assistant", "content": answer})
             st.rerun()
 
     user_input = st.chat_input("请输入关于工程质量标准的问题...")
     if user_input:
         st.session_state.qa_messages.append({"role": "user", "content": user_input})
-        answer = demo_answer(user_input)
+        answer = call_ai_api(user_input) or demo_answer(user_input)
         st.session_state.qa_messages.append({"role": "assistant", "content": answer})
         st.rerun()
 
@@ -1319,10 +1377,60 @@ def main():
         page = st.radio("功能导航", ["首页", "报告分析", "标准问答", "趋势分析", "报告生成"], index=0)
 
         st.markdown("---")
+
+        # API配置区域
+        st.markdown("""
+        <div style="background: #141516; padding: 12px; border-radius: 8px; border: 1px solid #23252a;">
+            <p style="color: #8a8f98; margin: 0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.4px;">🤖 AI模型配置</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        api_provider = st.selectbox(
+            "选择AI模型",
+            ["演示模式（无需API）", "豆包（字节跳动）", "通义千问（阿里）", "DeepSeek", "OpenAI"],
+            index=0
+        )
+
+        api_key = ""
+        api_base = ""
+
+        if api_provider != "演示模式（无需API）":
+            api_key = st.text_input("API Key", type="password", placeholder="请输入您的API Key")
+
+            if api_provider == "豆包（字节跳动）":
+                api_base = "https://ark.cn-beijing.volces.com/api/v3"
+                st.caption("获取API Key: [火山引擎](https://console.volcengine.com/ark)")
+            elif api_provider == "通义千问（阿里）":
+                api_base = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+                st.caption("获取API Key: [通义千问](https://dashscope.console.aliyun.com)")
+            elif api_provider == "DeepSeek":
+                api_base = "https://api.deepseek.com/v1"
+                st.caption("获取API Key: [DeepSeek](https://platform.deepseek.com)")
+            elif api_provider == "OpenAI":
+                api_base = st.text_input("API Base URL", value="https://api.openai.com/v1")
+                st.caption("获取API Key: [OpenAI](https://platform.openai.com)")
+
+            # 保存到session state
+            st.session_state.api_provider = api_provider
+            st.session_state.api_key = api_key
+            st.session_state.api_base = api_base
+
+            if api_key:
+                st.success(f"✓ 已配置 {api_provider}")
+            else:
+                st.warning("请输入API Key")
+        else:
+            st.session_state.api_provider = "演示模式"
+            st.session_state.api_key = ""
+            st.session_state.api_base = ""
+            st.info("💡 使用规则引擎回复")
+
+        st.markdown("---")
+
         st.markdown("""
         <div style="background: #141516; padding: 12px; border-radius: 8px; border: 1px solid #23252a;">
             <p style="color: #8a8f98; margin: 0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.4px;">系统状态</p>
-            <p style="color: #27a644; margin: 4px 0 0 0; font-size: 0.875rem;">✓ 就绪（演示模式）</p>
+            <p style="color: #27a644; margin: 4px 0 0 0; font-size: 0.875rem;">✓ 就绪</p>
         </div>
         """, unsafe_allow_html=True)
 
