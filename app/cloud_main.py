@@ -831,8 +831,46 @@ def render_home():
     # Architecture Section
     st.markdown('<p class="eyebrow" style="margin-bottom: 1.5rem;">系统架构</p>', unsafe_allow_html=True)
 
-    # 系统架构图片
-    st.image("assets/architecture.png", use_container_width=True, caption="系统架构图")
+    # 系统架构图片 - 使用多种方式确保显示
+    try:
+        # 方式1：直接使用相对路径
+        st.image("assets/architecture.png", use_container_width=True, caption="系统架构图")
+    except Exception as e:
+        # 方式2：如果失败，使用 base64 编码
+        import base64
+        from pathlib import Path
+
+        # 尝试多个可能的路径
+        possible_paths = [
+            Path(__file__).parent.parent / "assets" / "architecture.png",
+            Path("assets/architecture.png"),
+            Path("../assets/architecture.png"),
+        ]
+
+        image_loaded = False
+        for img_path in possible_paths:
+            if img_path.exists():
+                with open(img_path, "rb") as f:
+                    img_data = base64.b64encode(f.read()).decode()
+                st.markdown(f'''
+                <div style="text-align: center;">
+                    <img src="data:image/png;base64,{img_data}"
+                         style="max-width: 100%; border-radius: 12px; border: 1px solid #23252a;"
+                         alt="系统架构图"/>
+                    <p style="color: #8a8f98; font-size: 0.875rem; margin-top: 0.5rem;">系统架构图</p>
+                </div>
+                ''', unsafe_allow_html=True)
+                image_loaded = True
+                break
+
+        if not image_loaded:
+            # 方式3：显示占位符
+            st.markdown("""
+            <div class="surface-card" style="text-align: center; padding: 3rem;">
+                <p style="color: #8a8f98;">架构图加载失败，请检查文件路径</p>
+                <p style="color: #62666d; font-size: 0.75rem;">错误: {}</p>
+            </div>
+            """.format(str(e)), unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
