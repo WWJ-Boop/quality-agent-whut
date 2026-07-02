@@ -153,20 +153,20 @@ def main():
         - 参赛人员：吴武俊
         """)
 
-    # 页面路由
+    # 页面路由 - 使用演示模式
     if page == "🏠 首页":
         render_home()
     elif page == "📊 报告分析":
-        from app.pages.report_analysis import render
+        from app.pages.report_analysis_demo import render
         render()
     elif page == "📚 标准问答":
-        from app.pages.standard_qa import render
+        from app.pages.standard_qa_demo import render
         render()
     elif page == "📈 趋势分析":
-        from app.pages.trend_analysis import render
+        from app.pages.trend_analysis_demo import render
         render()
     elif page == "📝 报告生成":
-        from app.pages.report_generate import render
+        from app.pages.report_generate_demo import render
         render()
 
 
