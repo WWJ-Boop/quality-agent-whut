@@ -3,7 +3,7 @@
 面向Streamlit Cloud的轻量版本，使用演示模式运行。
 设计风格：Linear-inspired 极简深色主题
 
-版本: 1.2.0 - 架构图显示优化
+版本: 1.3.0 - 架构图显示修复
 """
 
 import sys
