@@ -865,7 +865,25 @@ def render_home():
             continue
 
     if not image_loaded:
-        # 如果所有路径都失败，显示占位符和调试信息
+        # 如果所有路径都失败，尝试直接读取文件
+        try:
+            # 直接尝试读取当前目录下的文件
+            with open("architecture.png", "rb") as f:
+                img_data = base64.b64encode(f.read()).decode()
+            st.markdown(f'''
+            <div style="text-align: center; margin: 2rem 0;">
+                <img src="data:image/png;base64,{img_data}"
+                     style="max-width: 100%; border-radius: 12px; border: 1px solid #23252a;"
+                     alt="系统架构图"/>
+                <p style="color: #8a8f98; font-size: 0.875rem; margin-top: 0.5rem;">系统架构图</p>
+            </div>
+            ''', unsafe_allow_html=True)
+            image_loaded = True
+        except:
+            pass
+
+    if not image_loaded:
+        # 如果还是失败，显示占位符
         st.markdown("""
         <div class="surface-card" style="text-align: center; padding: 3rem;">
             <div style="margin-bottom: 1.5rem;">
@@ -880,12 +898,6 @@ def render_home():
             <p class="body-sm" style="color: #8a8f98;">请将 architecture.png 放入 assets 文件夹</p>
         </div>
         """, unsafe_allow_html=True)
-
-        # 显示调试信息（仅在开发模式下）
-        if st.checkbox("显示调试信息", key="debug_arch"):
-            st.write("尝试的路径:", possible_paths)
-            st.write("当前工作目录:", os.getcwd())
-            st.write("脚本目录:", os.path.dirname(__file__))
 
     st.markdown("<br>", unsafe_allow_html=True)
 
