@@ -1199,13 +1199,35 @@ def render_trend_analysis():
 
         unit_map = {"混凝土抗压强度": "MPa", "钢筋屈服强度": "MPa", "坍落度": "mm", "回弹值": ""}
         st.markdown('<p class="eyebrow" style="margin-top: 2rem;">趋势图</p>', unsafe_allow_html=True)
-        chart_base64 = generate_trend_chart(data, title=f"{indicator_type}趋势图", indicator_name=indicator_type, unit=unit_map.get(indicator_type, ""))
-        st.image(io.BytesIO(base64.b64decode(chart_base64)), use_container_width=True)
+
+        # 直接用st.pyplot显示趋势图
+        dates = [d["date"] for d in data]
+        values = [d["value"] for d in data]
+        fig1, ax1 = plt.subplots(figsize=(10, 5))
+        ax1.plot(dates, values, 'b-o', linewidth=2, markersize=6, label=indicator_type)
+        mean_val = np.mean(values)
+        ax1.axhline(y=mean_val, color='g', linestyle='--', alpha=0.7, label=f'均值: {mean_val:.1f}')
+        ax1.set_title(f"{indicator_type}趋势图")
+        ax1.set_xlabel("日期")
+        ylabel = f"{indicator_type}({unit_map.get(indicator_type, '')})" if unit_map.get(indicator_type) else indicator_type
+        ax1.set_ylabel(ylabel)
+        ax1.legend()
+        ax1.grid(True, alpha=0.3)
+        plt.xticks(rotation=45, ha='right')
+        plt.tight_layout()
+        st.pyplot(fig1)
 
         st.markdown('<p class="eyebrow" style="margin-top: 2rem;">分布图</p>', unsafe_allow_html=True)
-        values = [d["value"] for d in data]
-        dist_base64 = generate_distribution_chart(values, title=f"{indicator_type}分布图", indicator_name=indicator_type, unit=unit_map.get(indicator_type, ""))
-        st.image(io.BytesIO(base64.b64decode(dist_base64)), use_container_width=True)
+        fig2, ax2 = plt.subplots(figsize=(8, 5))
+        ax2.hist(values, bins=10, color='steelblue', edgecolor='white', alpha=0.8)
+        ax2.axvline(x=mean_val, color='r', linestyle='--', label=f'均值: {mean_val:.1f}')
+        ax2.set_title(f"{indicator_type}分布图")
+        ax2.set_xlabel(indicator_type)
+        ax2.set_ylabel("频次")
+        ax2.legend()
+        ax2.grid(True, alpha=0.3, axis='y')
+        plt.tight_layout()
+        st.pyplot(fig2)
 
         if result.get("warning"):
             st.warning(f"⚠️ {result['warning']}")
