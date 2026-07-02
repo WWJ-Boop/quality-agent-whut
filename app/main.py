@@ -1149,6 +1149,8 @@ def render_standard_qa():
 
 def render_trend_analysis():
     """趋势分析页面"""
+    import numpy as np
+    import pandas as pd
     st.markdown("""
     <div style="margin-bottom: 2rem;">
         <h1 class="display-md">检测数据趋势分析</h1>
