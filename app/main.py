@@ -738,10 +738,16 @@ def call_ai_api(question):
         return None
 
     # 构建请求
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
+    if "MiMo" in api_provider:
+        headers = {
+            "api-key": api_key,
+            "Content-Type": "application/json"
+        }
+    else:
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
 
     # 工程检测系统提示词
     system_prompt = """你是「智检通」工程质量检测智能助手，专门解答工程检测相关问题。
