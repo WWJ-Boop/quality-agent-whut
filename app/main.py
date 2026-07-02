@@ -25,15 +25,10 @@ def init_session_state():
     """初始化会话状态"""
     if "messages" not in st.session_state:
         st.session_state.messages = []
-    if "model_server" not in st.session_state:
-        from model.inference.model_server import ModelServer
-        server = ModelServer()
-        server.initialize()
-        st.session_state.model_server = server
-    if "vector_store" not in st.session_state:
-        st.session_state.vector_store = None
-    if "coordinator" not in st.session_state:
-        st.session_state.coordinator = None
+    # 演示模式不需要初始化模型
+    st.session_state.model_server = None
+    st.session_state.vector_store = None
+    st.session_state.coordinator = None
 
 
 def load_custom_css():
