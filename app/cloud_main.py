@@ -834,7 +834,24 @@ def render_home():
     st.markdown('<p class="eyebrow" style="margin-bottom: 1.5rem;">系统架构</p>', unsafe_allow_html=True)
 
     # 系统架构图片
-    st.image("assets/architecture.png", use_container_width=True, caption="系统架构图")
+    # 获取项目根目录（app的父目录）
+    import os
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    image_path = os.path.join(project_root, "assets", "architecture.png")
+
+    # 如果图片存在则显示，否则显示占位符
+    if os.path.exists(image_path):
+        st.image(image_path, use_container_width=True, caption="系统架构图")
+    else:
+        # 尝试相对路径
+        try:
+            st.image("assets/architecture.png", use_container_width=True, caption="系统架构图")
+        except:
+            st.markdown("""
+            <div class="surface-card" style="text-align: center; padding: 3rem;">
+                <p style="color: #8a8f98;">架构图加载中...</p>
+            </div>
+            """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
