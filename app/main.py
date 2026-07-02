@@ -1201,19 +1201,22 @@ def render_trend_analysis():
         st.markdown('<p class="eyebrow" style="margin-top: 2rem;">趋势图</p>', unsafe_allow_html=True)
 
         # 使用Streamlit自带图表
-        chart_data = []
-        for d in data:
-            chart_data.append({"日期": d["date"], indicator_type: d["value"]})
-
         import pandas as pd
-        df = pd.DataFrame(chart_data)
-        df = df.set_index("日期")
-        st.line_chart(df)
+        values = [d["value"] for d in data]
+        dates = [d["date"] for d in data]
+
+        # 趋势图
+        chart_df = pd.DataFrame({"日期": dates, "检测值": values})
+        st.line_chart(chart_df.set_index("日期"))
 
         st.markdown('<p class="eyebrow" style="margin-top: 2rem;">分布图</p>', unsafe_allow_html=True)
-        values = [d["value"] for d in data]
-        hist_data = pd.DataFrame({indicator_type: values})
-        st.bar_chart(hist_data.value_counts().sort_index())
+
+        # 分布图 - 使用简单的柱状图
+        import numpy as np
+        hist, bin_edges = np.histogram(values, bins=10)
+        bin_labels = [f"{bin_edges[i]:.1f}-{bin_edges[i+1]:.1f}" for i in range(len(hist))]
+        hist_df = pd.DataFrame({"范围": bin_labels, "频次": hist})
+        st.bar_chart(hist_df.set_index("范围"))
 
         if result.get("warning"):
             st.warning(f"⚠️ {result['warning']}")
