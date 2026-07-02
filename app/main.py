@@ -1407,8 +1407,8 @@ def main():
                 api_base = "https://api.deepseek.com/v1"
                 st.caption("获取API Key: [DeepSeek](https://platform.deepseek.com)")
             elif api_provider == "MiMo（小米）":
-                api_base = "https://api.mimo.ai/v1"
-                st.caption("获取API Key: [MiMo](https://mimo.ai)")
+                api_base = "https://api.xiaomimimo.com/v1"
+                st.caption("获取API Key: [MiMo](https://xiaomimimo.com)")
             elif api_provider == "OpenAI":
                 api_base = st.text_input("API Base URL", value="https://api.openai.com/v1")
                 st.caption("获取API Key: [OpenAI](https://platform.openai.com)")
