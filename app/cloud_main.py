@@ -833,71 +833,8 @@ def render_home():
     # Architecture Section
     st.markdown('<p class="eyebrow" style="margin-bottom: 1.5rem;">系统架构</p>', unsafe_allow_html=True)
 
-    # 系统架构图片 - 使用 base64 编码确保显示
-    import base64
-    import os
-
-    # 尝试多个可能的路径
-    possible_paths = [
-        "assets/architecture.png",
-        "../assets/architecture.png",
-        os.path.join(os.path.dirname(__file__), "..", "assets", "architecture.png"),
-        os.path.join(os.getcwd(), "assets", "architecture.png"),
-    ]
-
-    image_loaded = False
-    for img_path in possible_paths:
-        try:
-            if os.path.exists(img_path):
-                with open(img_path, "rb") as f:
-                    img_data = base64.b64encode(f.read()).decode()
-                st.markdown(f'''
-                <div style="text-align: center; margin: 2rem 0;">
-                    <img src="data:image/png;base64,{img_data}"
-                         style="max-width: 100%; border-radius: 12px; border: 1px solid #23252a;"
-                         alt="系统架构图"/>
-                    <p style="color: #8a8f98; font-size: 0.875rem; margin-top: 0.5rem;">系统架构图</p>
-                </div>
-                ''', unsafe_allow_html=True)
-                image_loaded = True
-                break
-        except Exception as e:
-            continue
-
-    if not image_loaded:
-        # 如果所有路径都失败，尝试直接读取文件
-        try:
-            # 直接尝试读取当前目录下的文件
-            with open("architecture.png", "rb") as f:
-                img_data = base64.b64encode(f.read()).decode()
-            st.markdown(f'''
-            <div style="text-align: center; margin: 2rem 0;">
-                <img src="data:image/png;base64,{img_data}"
-                     style="max-width: 100%; border-radius: 12px; border: 1px solid #23252a;"
-                     alt="系统架构图"/>
-                <p style="color: #8a8f98; font-size: 0.875rem; margin-top: 0.5rem;">系统架构图</p>
-            </div>
-            ''', unsafe_allow_html=True)
-            image_loaded = True
-        except:
-            pass
-
-    if not image_loaded:
-        # 如果还是失败，显示占位符
-        st.markdown("""
-        <div class="surface-card" style="text-align: center; padding: 3rem;">
-            <div style="margin-bottom: 1.5rem;">
-                <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="120" height="120" rx="16" fill="#141516"/>
-                    <path d="M60 25L85 45V75L60 95L35 75V45L60 25Z" stroke="#5e6ad2" stroke-width="2" fill="none"/>
-                    <circle cx="60" cy="60" r="15" fill="#5e6ad2" opacity="0.3"/>
-                    <circle cx="60" cy="60" r="8" fill="#5e6ad2"/>
-                </svg>
-            </div>
-            <p class="body" style="margin-bottom: 1rem;">系统架构图</p>
-            <p class="body-sm" style="color: #8a8f98;">请将 architecture.png 放入 assets 文件夹</p>
-        </div>
-        """, unsafe_allow_html=True)
+    # 系统架构图片
+    st.image("assets/architecture.png", use_container_width=True, caption="系统架构图")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
