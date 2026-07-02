@@ -836,12 +836,15 @@ def render_home():
     # 系统架构图片
     # 获取项目根目录（app的父目录）
     import os
+    import time
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     image_path = os.path.join(project_root, "assets", "architecture.png")
 
     # 如果图片存在则显示，否则显示占位符
     if os.path.exists(image_path):
-        st.image(image_path, use_container_width=True, caption="系统架构图")
+        # 添加时间戳防止缓存
+        timestamp = int(time.time())
+        st.image(image_path, use_container_width=True, caption=f"系统架构图 (更新于 {timestamp})")
     else:
         # 尝试相对路径
         try:
