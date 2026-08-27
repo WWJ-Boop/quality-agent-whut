@@ -19,21 +19,41 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 from datetime import datetime, timedelta
 import io
 import base64
+import os
 
 # 页面配置
 st.set_page_config(
     page_title="智检通 - 工程质量检测智能分析",
-    page_icon="⚡",
+    page_icon="🏗️",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# 设置中文字体
-plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'DejaVu Sans']
-plt.rcParams['axes.unicode_minus'] = False
+# === 中文字体修复 ===
+def _setup_chinese_font():
+    font_dir = Path(__file__).parent.parent / "fonts"
+    font_path = font_dir / "NotoSansSC-Regular.ttf"
+    if not font_path.exists():
+        font_dir.mkdir(exist_ok=True)
+        try:
+            import urllib.request
+            url = "https://github.com/googlefonts/noto-cjk/raw/main/Sans/OTF/SimplifiedChinese/NotoSansSC-Regular.otf"
+            urllib.request.urlretrieve(url, str(font_path))
+        except Exception:
+            pass
+    if font_path.exists():
+        fm.fontManager.addfont(str(font_path))
+        fp = fm.FontProperties(fname=str(font_path))
+        plt.rcParams['font.family'] = fp.get_name()
+    else:
+        plt.rcParams['font.sans-serif'] = ['Noto Sans SC', 'SimHei', 'Microsoft YaHei', 'DejaVu Sans', 'sans-serif']
+    plt.rcParams['axes.unicode_minus'] = False
+
+_setup_chinese_font()
 
 # ============================================================
 # Linear-inspired CSS Design System
@@ -1410,7 +1430,41 @@ def render_report_generate():
             st.markdown('<p class="eyebrow">生成的报告</p>', unsafe_allow_html=True)
             st.text_area("", report_content, height=600)
 
-        st.download_button(label="下载报告", data=report_content, file_name=f"检测报告_{report_id}.md" if output_format == "markdown" else f"检测报告_{report_id}.txt", mime="text/markdown" if output_format == "markdown" else "text/plain")
+        # Word报告导出
+        try:
+            from docx import Document
+            doc = Document()
+            doc.add_heading("质量检测报告", 0)
+            info_table = doc.add_table(rows=1, cols=2)
+            info_table.style = "Table Grid"
+            for label, val in [("报告编号", report_id), ("工程名称", project_name), ("委托单位", client), ("检测日期", str(test_date)), ("报告日期", str(report_date))]:
+                row = info_table.add_row()
+                row.cells[0].text = label
+                row.cells[1].text = str(val)
+            doc.add_heading("检测项目及结果", level=1)
+            rt = doc.add_table(rows=1, cols=6)
+            rt.style = "Table Grid"
+            for i, h in enumerate(["序号", "检测项目", "检测值", "单位", "标准要求", "判定"]):
+                rt.rows[0].cells[i].text = h
+            for i, item in enumerate(test_items, 1):
+                row = rt.add_row()
+                row.cells[0].text = str(i)
+                row.cells[1].text = item["name"]
+                row.cells[2].text = str(item["value"])
+                row.cells[3].text = item.get("unit", "")
+                row.cells[4].text = item.get("standard", "-")
+                row.cells[5].text = "合格" if item.get("is_compliant", True) else "不合格"
+            doc.add_heading("检测结论", level=1)
+            doc.add_paragraph(conclusion)
+            doc.add_paragraph(f"检测单位: {test_unit}")
+            doc.add_paragraph(f"报告日期: {report_date}")
+            word_buf = io.BytesIO()
+            doc.save(word_buf)
+            word_buf.seek(0)
+            st.download_button(label="下载Word报告", data=word_buf, file_name=f"检测报告_{report_id}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        except Exception as e:
+            st.warning(f"Word导出不可用: {e}")
+        st.download_button(label="下载Markdown报告", data=report_content, file_name=f"检测报告_{report_id}.md", mime="text/markdown")
 
         st.markdown('<p class="eyebrow" style="margin-top: 2rem;">合格性统计</p>', unsafe_allow_html=True)
         total = len(test_items)
@@ -1423,6 +1477,144 @@ def render_report_generate():
             st.metric("合格项目", passed)
         with col3:
             st.metric("不合格项目", failed)
+
+
+
+# ============================================================
+# 裂缝检测页面
+# ============================================================
+
+def render_crack_detection():
+    st.markdown("裂缝检测页面", unsafe_allow_html=True)
+    st.markdown("---")
+    uploaded = st.file_uploader("上传混凝土表面照片", type=["jpg", "jpeg", "png", "bmp"])
+    if uploaded:
+        from PIL import Image
+        img = Image.open(uploaded)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("#### 原始图像")
+            st.image(img, use_container_width=True)
+        with col2:
+            st.markdown("#### 检测结果")
+            try:
+                import cv2
+                img_np = np.array(img)
+                gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
+                blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+                thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+                kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+                morph = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+                contours, _ = cv2.findContours(morph, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                result_img = img_np.copy()
+                crack_count = 0
+                for cnt in contours:
+                    area = cv2.contourArea(cnt)
+                    if area < 100:
+                        continue
+                    x, y, w, h = cv2.boundingRect(cnt)
+                    ar = max(w, h) / (min(w, h) + 1e-6)
+                    if ar > 3:
+                        crack_count += 1
+                        cv2.drawContours(result_img, [cnt], -1, (255, 50, 50), 2)
+                st.image(result_img, use_container_width=True)
+                st.metric("检测到裂缝数量", crack_count)
+                if crack_count > 0:
+                    st.warning(f"检测到 {crack_count} 处疑似裂缝")
+                else:
+                    st.success("未检测到明显裂缝")
+            except ImportError:
+                st.error("请安装 opencv-python: pip install opencv-python-headless")
+            except Exception as e:
+                st.error(f"检测出错: {e}")
+
+# ============================================================
+# 质量闭环管理页面
+# ============================================================
+
+def render_quality_workflow():
+    st.markdown("质量闭环管理")
+    st.markdown("---")
+    defects = [
+        {"id": "DEF-001", "type": "裂缝", "loc": "2层梁KL-1底部", "sev": 3, "status": "open", "desc": "横向裂缝，宽0.25mm，长450mm",
+         "stages": [("发现", "2026-07-10", "张工", "巡检发现裂缝"), ("预警", "2026-07-10", "系统", "裂缝宽度超0.2mm阈值")]},
+        {"id": "DEF-002", "type": "蜂窝", "loc": "1层柱KZ-3东侧", "sev": 2, "status": "processing", "desc": "蜂窝麻面，面积约200cm2",
+         "stages": [("发现", "2026-07-08", "李工", "拆模后发现蜂窝"), ("预警", "2026-07-08", "系统", "蜂窝缺陷等级2级"), ("整改", "2026-07-12", "施工队", "采用高强砂浆修补")]},
+        {"id": "DEF-003", "type": "钢筋外露", "loc": "3层板B-2角部", "sev": 4, "status": "closed", "desc": "主筋外露，保护层厚度不足",
+         "stages": [("发现", "2026-07-05", "王工", "保护层检测发现外露"), ("预警", "2026-07-05", "系统", "高危预警"), ("整改", "2026-07-07", "施工队", "除锈+修补保护层"), ("复核", "2026-07-14", "监理", "复核合格"), ("销号", "2026-07-15", "质量部", "确认整改完成")]},
+    ]
+    for d in defects:
+        label = {"open": "待处理", "processing": "处理中", "closed": "已关闭"}[d["status"]]
+        with st.expander(f"{d['id']} - {d['type']} ({d['loc']}) [{label}]", expanded=d["status"]=="open"):
+            st.markdown(f"**缺陷类型:** {d['type']}  \n**位置:** {d['loc']}  \n**严重程度:** {'*' * d['sev']}  \n**描述:** {d['desc']}")
+            st.markdown("**处理流程:**")
+            for sname, date, op, note in d["stages"]:
+                st.markdown(f"- **{sname}** ({date}) - {op}: {note}")
+
+# ============================================================
+# IoT数据监控页面
+# ============================================================
+
+def render_iot_monitoring():
+    st.markdown("IoT传感器监控")
+    st.markdown("---")
+    sensors = [
+        {"id": "TEMP-001", "type": "温度传感器", "loc": "1层柱KZ-1内部", "unit": "C", "values": [25.3, 28.1, 32.5, 35.2, 33.8, 29.4], "range": (15, 40)},
+        {"id": "HUM-001", "type": "湿度传感器", "loc": "1层柱KZ-1表面", "unit": "%RH", "values": [75.2, 68.5, 62.1, 58.3, 63.7, 70.4], "range": (40, 85)},
+        {"id": "STRAIN-001", "type": "应变传感器", "loc": "2层梁KL-1跨中", "unit": "ue", "values": [120, 185, 245, 310, 280, 195], "range": (0, 500)},
+        {"id": "DISP-001", "type": "位移传感器", "loc": "2层梁KL-1跨中", "unit": "mm", "values": [0.5, 1.2, 2.1, 2.8, 2.3, 1.5], "range": (0, 5)},
+    ]
+    times = ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00"]
+    for s in sensors:
+        st.markdown(f"### {s['type']} - {s['id']}")
+        c1, c2, c3 = st.columns(3)
+        with c1: st.metric("当前值", f"{s['values'][-1]} {s['unit']}")
+        with c2: st.metric("最大值", f"{max(s['values'])} {s['unit']}")
+        with c3: st.metric("最小值", f"{min(s['values'])} {s['unit']}")
+        fig, ax = plt.subplots(figsize=(10, 3), facecolor='#0f1011')
+        ax.set_facecolor('#0f1011')
+        ax.plot(times, s['values'], color='#5e6ad2', linewidth=2, marker='o', markersize=5)
+        lo, hi = s['range']
+        ax.axhspan(lo, hi, alpha=0.1, color='#27a644')
+        ax.axhline(y=hi, color='#ef4444', linestyle='--', alpha=0.5)
+        ax.axhline(y=lo, color='#ef4444', linestyle='--', alpha=0.5)
+        ax.tick_params(colors='#8a8f98')
+        for spine in ['bottom', 'left']: ax.spines[spine].set_color('#23252a')
+        for spine in ['top', 'right']: ax.spines[spine].set_visible(False)
+        plt.tight_layout()
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=100, bbox_inches='tight', facecolor='#0f1011')
+        buf.seek(0)
+        plt.close(fig)
+        st.image(buf, use_container_width=True)
+        st.markdown("---")
+
+# ============================================================
+# 智能对话页面
+# ============================================================
+
+def render_ai_chat():
+    st.markdown("智能对话")
+    st.markdown("---")
+    if "chat_messages" not in st.session_state:
+        st.session_state.chat_messages = [
+            {"role": "assistant", "content": "您好！我是智检通AI助手，可以帮您：\n1. 分析检测数据\n2. 查询标准规范\n3. 解读趋势\n请问有什么可以帮您的？"}
+        ]
+    for msg in st.session_state.chat_messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+    if prompt := st.chat_input("输入您的问题..."):
+        st.session_state.chat_messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        with st.chat_message("assistant"):
+            with st.spinner("思考中..."):
+                response = call_ai_api(prompt)
+                if response is None:
+                    response = demo_answer(prompt)
+                st.markdown(response)
+                st.session_state.chat_messages.append({"role": "assistant", "content": response})
+
 
 
 # ============================================================
@@ -1439,12 +1631,17 @@ def main():
         """, unsafe_allow_html=True)
         st.markdown("---")
 
-        page = st.radio("功能导航", ["首页", "报告分析", "标准问答", "趋势分析", "报告生成"], index=0)
+        page = st.radio("功能导航", [
+            "🏠 首页", "📊 报告分析", "🔍 裂缝检测", "📚 标准问答",
+            "📈 趋势分析", "⚠️ 质量闭环", "📡 IoT监控",
+            "📝 报告生成", "🤖 智能对话"
+        ], index=0)
 
         st.markdown("---")
 
-        # API配置区域
-        st.markdown("""
+        # API配置区域 - 可折叠
+        with st.expander("AI模型配置", expanded=False):
+            st.markdown("""
         <div style="background: #141516; padding: 12px; border-radius: 8px; border: 1px solid #23252a;">
             <p style="color: #8a8f98; margin: 0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.4px;">🤖 AI模型配置</p>
         </div>
@@ -1511,16 +1708,25 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-    if page == "首页":
+    page_key = page.split(" ", 1)[-1] if " " in page else page
+    if page_key == "首页":
         render_home()
-    elif page == "报告分析":
+    elif page_key == "报告分析":
         render_report_analysis()
-    elif page == "标准问答":
+    elif page_key == "裂缝检测":
+        render_crack_detection()
+    elif page_key == "标准问答":
         render_standard_qa()
-    elif page == "趋势分析":
+    elif page_key == "趋势分析":
         render_trend_analysis()
-    elif page == "报告生成":
+    elif page_key == "质量闭环":
+        render_quality_workflow()
+    elif page_key == "IoT监控":
+        render_iot_monitoring()
+    elif page_key == "报告生成":
         render_report_generate()
+    elif page_key == "智能对话":
+        render_ai_chat()
 
 
 if __name__ == "__main__":
