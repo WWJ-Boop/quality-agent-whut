@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """智检通 - 云端部署版主入口（Linear设计风格）
 
 面向Streamlit Cloud的轻量版本，使用演示模式运行。
