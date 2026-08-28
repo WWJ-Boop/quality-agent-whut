@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import streamlit as st
+from loguru import logger
 import re
 import json
 import numpy as np
@@ -851,18 +852,26 @@ def call_ai_api(question):
     }
 
     try:
-        response = requests.post(
-            f"{api_base}/chat/completions",
-            headers=headers,
-            json=data,
-            timeout=30
-        )
+        url = f"{api_base}/chat/completions"
+        logger.info("调用AI API: {} provider={}", url, api_provider)
+        response = requests.post(url, headers=headers, json=data, timeout=30)
         if response.status_code == 200:
             result = response.json()
-            return result["choices"][0]["message"]["content"]
+            if "choices" in result and len(result["choices"]) > 0:
+                return result["choices"][0]["message"]["content"]
+            elif "content" in result:
+                return result["content"]
+            else:
+                return f"API返回格式异常: {str(result)[:200]}"
         else:
-            return f"API调用失败: {response.status_code} - {response.text}"
+            logger.warning("API调用失败: {} {}", response.status_code, response.text[:200])
+            return f"API调用失败({response.status_code}): {response.text[:200]}"
+    except requests.exceptions.Timeout:
+        return "API调用超时（30秒），请检查网络或稍后重试"
+    except requests.exceptions.ConnectionError:
+        return f"无法连接到API服务器: {api_base}，请检查地址是否正确"
     except Exception as e:
+        logger.error("API调用异常: {}", str(e))
         return f"API调用错误: {str(e)}"
 
 
@@ -1866,7 +1875,9 @@ def main():
                 st.caption("获取API Key: [DeepSeek](https://platform.deepseek.com)")
             elif api_provider == "MiMo（小米）":
                 api_base = "https://token-plan-cn.xiaomimimo.com/v1"
+                st.caption("注意：API地址必须以 /v1 结尾，不要用 /anthropic")
                 st.caption("获取API Key: [MiMo Token Plan](https://xiaomimimo.com)")
+                st.caption("API地址: https://token-plan-cn.xiaomimimo.com/v1")
             elif api_provider == "OpenAI":
                 api_base = st.text_input("API Base URL", value="https://api.openai.com/v1")
                 st.caption("获取API Key: [OpenAI](https://platform.openai.com)")
