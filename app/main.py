@@ -866,37 +866,52 @@ def _call_openai(api_base, api_key, model, question, timeout=30):
 
 
 def _call_anthropic(api_base, api_key, model, question, timeout=30):
-    """Anthropic Messages API协议调用"""
+    """Anthropic Messages API协议调用（兼容MiMo Token Plan）
+
+    MiMo认证头用 api-key（不是 x-api-key）
+    端点: BASE_URL/v1/messages
+    """
     import requests
     headers = {
-        "x-api-key": api_key,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json"
+        "api-key": api_key,
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
     }
     data = {
         "model": model,
         "max_tokens": 1500,
         "system": SYSTEM_PROMPT,
         "messages": [
-            {"role": "user", "content": question}
-        ]
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": question}]
+            }
+        ],
+        "thinking": {"type": "disabled"}
     }
+    # 构建端点: BASE_URL/v1/messages
     base = api_base.rstrip("/")
-    if base.endswith("/v1"):
+    if base.endswith("/v1/messages"):
+        url = base
+    elif base.endswith("/v1"):
         url = base + "/messages"
     elif base.endswith("/messages"):
         url = base
     else:
         url = base + "/v1/messages"
+    logger.info("Anthropic请求: {}", url)
     resp = requests.post(url, headers=headers, json=data, timeout=timeout)
     if resp.status_code != 200:
-        return None, f"API调用失败({resp.status_code}): {resp.text[:200]}"
+        return None, f"API调用失败({resp.status_code}): {resp.text[:300]}"
     result = resp.json()
+    # 解析响应
     if "content" in result and result["content"]:
         text_blocks = [b["text"] for b in result["content"] if b.get("type") == "text"]
         if text_blocks:
             return "".join(text_blocks), None
-    return None, f"API返回格式异常: {str(result)[:200]}"
+    if "error" in result:
+        return None, f"API错误: {result['error'].get('message', str(result['error']))}"
+    return None, f"API返回格式异常: {str(result)[:300]}"
 
 
 def call_ai_api(question):
