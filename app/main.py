@@ -809,25 +809,7 @@ def generate_distribution_chart(values, title="检测值分布图", indicator_na
     return img_base64
 
 
-def call_ai_api(question):
-    """调用AI API回答问题"""
-    import requests
-
-    api_provider = st.session_state.get("api_provider", "演示模式")
-    api_key = st.session_state.get("api_key", "")
-    api_base = st.session_state.get("api_base", "")
-
-    if api_provider == "演示模式" or not api_key:
-        return None
-
-    # 构建请求
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-
-    # 工程检测系统提示词
-    system_prompt = """你是「智检通」工程质量检测智能助手，专门解答工程检测相关问题。
+SYSTEM_PROMPT = """你是「智检通」工程质量检测智能助手，专门解答工程检测相关问题。
 
 你的知识范围包括：
 1. 混凝土强度检测与评定（GB/T 50107、GB 50204、GB/T 50081）
@@ -838,34 +820,121 @@ def call_ai_api(question):
 6. 工程质量合格判定
 7. 取样频率与批次规定
 8. 承载力计算与判定
+9. 原材料检测（水泥/砂石/防水/保温/砌块）
+10. 施工过程检测（砂浆/压实度/焊缝/抗渗）
+11. 实体质量检测（保护层/楼板厚度/垂直度/平整度）
+12. 功能性检测（门窗/管道/电气/消防）
+13. 竣工专项检测（室内环境/节能）
 
 请用专业、准确、简洁的方式回答问题。如果涉及具体数值，请引用相关标准条文。"""
 
+
+def _detect_api_protocol(api_base):
+    """根据API地址自动判断协议类型：anthropic / openai"""
+    base = api_base.lower().rstrip("/")
+    if "/anthropic" in base or "anthropic" in base:
+        return "anthropic"
+    return "openai"
+
+
+def _call_openai(api_base, api_key, model, question, timeout=30):
+    """OpenAI兼容协议调用"""
+    import requests
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
     data = {
-        "model": "doubao-1.5-pro-32k" if "豆包" in api_provider else "qwen-turbo" if "通义" in api_provider else "deepseek-chat" if "DeepSeek" in api_provider else "mimo-v2.5-pro" if "MiMo" in api_provider else "gpt-3.5-turbo",
+        "model": model,
         "messages": [
-            {"role": "system", "content": system_prompt},
+            {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": question}
         ],
         "temperature": 0.7,
-        "max_tokens": 1000
+        "max_tokens": 1500
     }
+    url = api_base.rstrip("/") + "/chat/completions"
+    resp = requests.post(url, headers=headers, json=data, timeout=timeout)
+    if resp.status_code != 200:
+        return None, f"API调用失败({resp.status_code}): {resp.text[:200]}"
+    result = resp.json()
+    if "choices" in result and result["choices"]:
+        return result["choices"][0]["message"]["content"], None
+    if "content" in result:
+        return result["content"], None
+    return None, f"API返回格式异常: {str(result)[:200]}"
+
+
+def _call_anthropic(api_base, api_key, model, question, timeout=30):
+    """Anthropic Messages API协议调用"""
+    import requests
+    headers = {
+        "x-api-key": api_key,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+    }
+    data = {
+        "model": model,
+        "max_tokens": 1500,
+        "system": SYSTEM_PROMPT,
+        "messages": [
+            {"role": "user", "content": question}
+        ]
+    }
+    base = api_base.rstrip("/")
+    if base.endswith("/v1"):
+        url = base + "/messages"
+    elif base.endswith("/messages"):
+        url = base
+    else:
+        url = base + "/v1/messages"
+    resp = requests.post(url, headers=headers, json=data, timeout=timeout)
+    if resp.status_code != 200:
+        return None, f"API调用失败({resp.status_code}): {resp.text[:200]}"
+    result = resp.json()
+    if "content" in result and result["content"]:
+        text_blocks = [b["text"] for b in result["content"] if b.get("type") == "text"]
+        if text_blocks:
+            return "".join(text_blocks), None
+    return None, f"API返回格式异常: {str(result)[:200]}"
+
+
+def call_ai_api(question):
+    """调用AI API - 自动兼容 OpenAI 和 Anthropic 协议"""
+    import requests
+
+    api_provider = st.session_state.get("api_provider", "演示模式")
+    api_key = st.session_state.get("api_key", "")
+    api_base = st.session_state.get("api_base", "")
+
+    if api_provider == "演示模式" or not api_key:
+        return None
+
+    # 模型映射
+    model = "gpt-3.5-turbo"
+    if "豆包" in api_provider:
+        model = "doubao-1.5-pro-32k"
+    elif "通义" in api_provider:
+        model = "qwen-turbo"
+    elif "DeepSeek" in api_provider:
+        model = "deepseek-chat"
+    elif "MiMo" in api_provider:
+        model = "mimo-v2.5-pro"
+
+    protocol = _detect_api_protocol(api_base)
+    logger.info("调用AI API: protocol={} provider={} base={}", protocol, api_provider, api_base)
 
     try:
-        url = f"{api_base}/chat/completions"
-        logger.info("调用AI API: {} provider={}", url, api_provider)
-        response = requests.post(url, headers=headers, json=data, timeout=30)
-        if response.status_code == 200:
-            result = response.json()
-            if "choices" in result and len(result["choices"]) > 0:
-                return result["choices"][0]["message"]["content"]
-            elif "content" in result:
-                return result["content"]
-            else:
-                return f"API返回格式异常: {str(result)[:200]}"
+        if protocol == "anthropic":
+            result, err = _call_anthropic(api_base, api_key, model, question)
         else:
-            logger.warning("API调用失败: {} {}", response.status_code, response.text[:200])
-            return f"API调用失败({response.status_code}): {response.text[:200]}"
+            result, err = _call_openai(api_base, api_key, model, question)
+
+        if err:
+            logger.warning("API调用失败: {}", err[:200])
+            return err
+        return result
+
     except requests.exceptions.Timeout:
         return "API调用超时（30秒），请检查网络或稍后重试"
     except requests.exceptions.ConnectionError:
@@ -1874,8 +1943,8 @@ def main():
                 api_base = "https://api.deepseek.com"
                 st.caption("获取API Key: [DeepSeek](https://platform.deepseek.com)")
             elif api_provider == "MiMo（小米）":
-                api_base = "https://token-plan-cn.xiaomimimo.com/v1"
-                st.caption("注意：API地址必须以 /v1 结尾，不要用 /anthropic")
+                api_base = "https://token-plan-cn.xiaomimimo.com/anthropic"
+                st.caption("Anthropic协议，自动适配")
                 st.caption("获取API Key: [MiMo Token Plan](https://xiaomimimo.com)")
                 st.caption("API地址: https://token-plan-cn.xiaomimimo.com/v1")
             elif api_provider == "OpenAI":
